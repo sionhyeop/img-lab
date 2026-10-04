@@ -37,10 +37,10 @@ HTML에 그대로 붙여넣을 수 있는 Base64 문자열까지 뽑아줍니다
 
 ### 방법 A — 웹 UI
 
-1. GitHub에서 새 저장소를 만듭니다 (예: `image-diet`).
+1. GitHub에서 새 저장소를 만듭니다 (예: `img-lab`).
 2. 이 폴더의 파일을 업로드하고 커밋합니다.
 3. 저장소 **Settings → Pages** 에서 Source를 `Deploy from a branch`, Branch를 `main` / `(root)`로 지정합니다.
-4. 몇 분 뒤 `https://<아이디>.github.io/image-diet/` 에서 열립니다.
+4. 몇 분 뒤 `https://<아이디>.github.io/img-lab/` 에서 열립니다.
 
 ### 방법 B — 명령줄 (gh CLI)
 
@@ -48,8 +48,8 @@ HTML에 그대로 붙여넣을 수 있는 Base64 문자열까지 뽑아줍니다
 git init -b main
 git add .
 git commit -m "image diet"
-gh repo create image-diet --public --source=. --push
-gh api -X POST "repos/{owner}/image-diet/pages" -f "source[branch]=main" -f "source[path]=/"
+gh repo create img-lab --public --source=. --push
+gh api -X POST "repos/{owner}/img-lab/pages" -f "source[branch]=main" -f "source[path]=/"
 ```
 
 ## 데스크톱(Windows) 설치 — GitHub에서
@@ -58,7 +58,7 @@ gh api -X POST "repos/{owner}/image-diet/pages" -f "source[branch]=main" -f "sou
 
 1. **저장소 내려받기** — 아래 중 하나:
    - GitHub 페이지에서 **Code → Download ZIP** 후 압축 해제, 또는
-   - `git clone https://github.com/sionhyeop/image-diet.git`
+   - `git clone https://github.com/sionhyeop/img-lab.git`
 2. **설치** — 압축 해제/클론한 폴더의 `shell\install.bat` 더블클릭 (관리자 권한 불필요).
 3. 이미지 파일을 우클릭 → **"이미지 다이어트로 압축"** → 압축/Base64/SVG/PDF 탭 창이 열립니다.
 

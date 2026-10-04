@@ -7,7 +7,7 @@
 - Python 3.x + Pillow (`pip install pillow`)
 
 ## 설치
-1. GitHub에서 저장소를 내려받습니다 — **Code → Download ZIP** 후 압축 해제, 또는 `git clone https://github.com/sionhyeop/image-diet.git`.
+1. GitHub에서 저장소를 내려받습니다 — **Code → Download ZIP** 후 압축 해제, 또는 `git clone https://github.com/sionhyeop/img-lab.git`.
 2. 이 `shell` 폴더의 `install.bat` 실행 (관리자 권한 불필요).
 3. 이미지 파일을 우클릭 → **"이미지 다이어트로 압축"** (Windows 11은 "더 많은 옵션 표시" 안에 아이콘과 함께 표시).
 
