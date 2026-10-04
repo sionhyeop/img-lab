@@ -765,8 +765,8 @@ input.split-name-num:focus { background: rgba(255, 255, 255, .28); outline: 2px 
         <line x1="12" y1="3" x2="12" y2="15"/>
       </svg>
       <p class="dz-main">이미지를 끌어다 놓거나 <strong>클릭</strong>해서 선택하세요</p>
-      <p class="dz-hint">여러 장 · 폴더째 끌어놓기 가능 · Ctrl+V 붙여넣기 지원 · JPG / PNG / WebP / GIF / SVG</p>
-      <input type="file" id="fileInput" accept="image/*,.svg" multiple hidden>
+      <p class="dz-hint">여러 장 · 폴더째 끌어놓기 가능 · Ctrl+V 붙여넣기 지원 · JPG / PNG / WebP / GIF / SVG · PDF·영상은 맞는 탭으로 자동 이동</p>
+      <input type="file" id="fileInput" accept="image/*,.svg,application/pdf,.pdf,video/*" multiple hidden>
     </div>
 
     <section class="card settings" aria-label="압축 설정">
@@ -3222,7 +3222,7 @@ input.split-name-num:focus { background: rgba(255, 255, 255, .28); outline: 2px 
     if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); el.fileInput.click(); }
   });
   el.fileInput.addEventListener('change', function () {
-    if (el.fileInput.files && el.fileInput.files.length) addFiles(el.fileInput.files);
+    if (el.fileInput.files && el.fileInput.files.length) routeFiles(el.fileInput.files, false);
     el.fileInput.value = '';
   });
 
@@ -3280,9 +3280,68 @@ input.split-name-num:focus { background: rgba(255, 255, 255, .28); outline: 2px 
     });
   }
 
+  /* 파일 종류 판별 — 탭 사이 자동 이동의 기준 */
+  function fileKind(f) {
+    var n = (f && f.name) || '', t = (f && f.type) || '';
+    if (t === 'application/pdf' || /\.pdf$/i.test(n)) return 'pdf';
+    if (/^video\//.test(t) || /\.(mp4|webm|mov|m4v|mkv)$/i.test(n)) return 'video';
+    if (/^image\//.test(t) || /\.(png|jpe?g|webp|gif|bmp|svg|avif|heic|heif)$/i.test(n)) return 'image';
+    if (/^audio\//.test(t) || /\.(mp3|m4a|flac|wav|ogg|aac)$/i.test(n)) return 'audio';
+    if (/\.(docx?|xlsx?|pptx?|hwpx?|odt|ods|odp)$/i.test(n)) return 'doc';
+    return 'other';
+  }
+  function tabByKey(key) {
+    for (var i = 0; i < tabs.length; i++) if (tabs[i].key === key) return tabs[i];
+    return null;
+  }
+
+  /* 지금 탭이 못 받는 파일을 맞는 탭으로 넘긴다 — PDF는 PDF → 이미지, 영상은 영상 → GIF,
+     오디오·문서는 메타데이터 탭으로. 현재 탭이 처리할 파일만 돌려준다.
+     이 탭에서 처리할 파일이 섞여 있으면 탭을 옮기지 않고, 나머지는 어디서 열 수 있는지 알려준다. */
+  function redirectFiles(files, key) {
+    var own = [], foreign = { pdf: [], video: [], audio: [], doc: [] }, other = [];
+    files.forEach(function (f) {
+      var k = fileKind(f);
+      if (k === 'image' || (k === 'pdf' && key === 'pdf') || (k === 'video' && key === 'gif')) own.push(f);
+      else if (foreign[k]) foreign[k].push(f);
+      else other.push(f);
+    });
+    var media = foreign.audio.concat(foreign.doc);
+    if (!foreign.pdf.length && !foreign.video.length && !media.length) return files;
+    var hint = [];
+    if (foreign.pdf.length) hint.push('PDF는 PDF 탭');
+    if (foreign.video.length) hint.push('영상은 GIF 탭');
+    if (media.length) hint.push('오디오·문서는 메타데이터 탭');
+    if (own.length) {
+      toast(hint.join(', ') + '에서 열 수 있어요 — 이번엔 건너뛰었어요.');
+      return own.concat(other);
+    }
+    var skip = function (list) { return list.length ? ' (나머지 ' + list.length + '개는 건너뛰었어요)' : ''; };
+    if (foreign.pdf.length) {
+      selectTab(tabByKey('pdf'), true);
+      pdfAcceptFiles(foreign.pdf);
+      toast('PDF를 이미지로 바꾸는 탭으로 옮겼어요.' + skip(foreign.video.concat(media, other)));
+    } else if (foreign.video.length) {
+      selectTab(tabByKey('gif'), true);
+      gifAcceptFiles([foreign.video[0]]);
+      toast('영상을 GIF로 만드는 탭으로 옮겼어요.' + skip(foreign.video.slice(1).concat(media, other)));
+    } else {
+      selectTab(tabByKey('meta'), true);
+      loadMetaFile(media[0]);
+      toast('파일 정보를 메타데이터 탭에서 열었어요.' + skip(media.slice(1).concat(other)));
+    }
+    return [];
+  }
+
   /* 활성 탭에 맞는 도구로 파일 전달 */
   function routeFiles(files, fromPaste) {
+    files = Array.prototype.slice.call(files || []);
     if (!files.length) return;
+    /* 메타데이터·Base64 탭은 어떤 파일이든 받으므로 옮기지 않는다 */
+    if (curTab.key !== 'meta' && curTab.key !== 'base64') {
+      files = redirectFiles(files, curTab.key);
+      if (!files.length) return;
+    }
     if (!$('#panel-meta').hidden) {
       loadMetaFile(files[0]);
     } else if (!$('#panel-bg').hidden) {
