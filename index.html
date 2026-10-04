@@ -6,7 +6,7 @@
 <title>이미지 다이어트 — 화질은 그대로, 용량만 가볍게</title>
 <meta name="description" content="서버 업로드 없이 브라우저에서만 동작하는 이미지 도구 — 압축·리사이즈·분할·일괄 크롭·PDF·GIF·QR·배경 제거·SVG·Base64·메타데이터. 오프라인에서도 쓸 수 있어요.">
 <meta name="theme-color" content="#f2f4f6">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 128 128'%3E%3Crect width='128' height='128' rx='28' fill='%233182f6'/%3E%3Cg fill='none' stroke='%23fff' stroke-width='8' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='24' y='24' width='56' height='56' rx='10' opacity='.5'/%3E%3Crect x='58' y='58' width='46' height='46' rx='10'/%3E%3Cpath d='M40 40l24 24M64 46v18H46'/%3E%3C/g%3E%3C/svg%3E">
+<link rel="icon" type="image/png" href="favicon.png">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-180.png">
 <meta name="mobile-web-app-capable" content="yes">
@@ -55,7 +55,7 @@ input, select, textarea { font: inherit; color: inherit; }
 }
 .header-inner { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .brand { display: flex; align-items: center; gap: 14px; }
-.brand svg { width: 46px; height: 46px; flex: none; border-radius: 13px; box-shadow: 0 6px 18px rgba(49, 130, 246, .25); }
+.brand img { width: 46px; height: 46px; flex: none; object-fit: contain; }
 .brand h1 { font-size: 23px; font-weight: 800; margin: 0; letter-spacing: -.5px; }
 .tagline { margin: 2px 0 0; color: var(--muted); font-size: 13.5px; }
 .header-actions { display: flex; align-items: center; gap: 8px; flex: none; }
@@ -690,14 +690,7 @@ input.split-name-num:focus { background: rgba(255, 255, 255, .28); outline: 2px 
 <header class="site-header">
   <div class="wrap header-inner">
     <div class="brand">
-      <svg viewBox="0 0 128 128" aria-hidden="true">
-        <rect width="128" height="128" rx="28" fill="#3182f6"/>
-        <g fill="none" stroke="#fff" stroke-width="8" stroke-linecap="round" stroke-linejoin="round">
-          <rect x="24" y="24" width="56" height="56" rx="10" opacity=".5"/>
-          <rect x="58" y="58" width="46" height="46" rx="10"/>
-          <path d="M40 40l24 24M64 46v18H46"/>
-        </g>
-      </svg>
+      <img src="logo.png" alt="" width="46" height="46">
       <div>
         <h1>이미지 다이어트</h1>
         <p class="tagline">화질은 그대로, 용량만 가볍게</p>
