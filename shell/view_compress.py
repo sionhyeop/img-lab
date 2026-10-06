@@ -98,7 +98,7 @@ class CompressView(tk.Frame):
             if target <= 0:
                 raise ValueError
         except ValueError:
-            messagebox.showerror("이미지 다이어트", "목표 용량은 양의 정수여야 합니다.")
+            messagebox.showerror("이미지 랩", "목표 용량은 양의 정수여야 합니다.")
             return
         fmt = self.seg.value
         save_settings(target, fmt)

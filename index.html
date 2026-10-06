@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>이미지 다이어트 — 화질은 그대로, 용량만 가볍게</title>
+<title>이미지 랩 — 화질은 그대로, 용량만 가볍게</title>
 <meta name="description" content="서버 업로드 없이 브라우저에서만 동작하는 이미지 도구 — 압축·리사이즈·분할·일괄 크롭·PDF·GIF·QR·배경 제거·SVG·Base64·메타데이터. 오프라인에서도 쓸 수 있어요.">
 <meta name="theme-color" content="#f2f4f6">
 <link rel="icon" type="image/png" href="favicon.png">
@@ -11,7 +11,7 @@
 <link rel="apple-touch-icon" href="icon-180.png">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="이미지 다이어트">
+<meta name="apple-mobile-web-app-title" content="이미지 랩">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <style>
 :root {
@@ -692,7 +692,7 @@ input.split-name-num:focus { background: rgba(255, 255, 255, .28); outline: 2px 
     <div class="brand">
       <img src="logo.png" alt="" width="46" height="46">
       <div>
-        <h1>이미지 다이어트</h1>
+        <h1>이미지 랩</h1>
         <p class="tagline">화질은 그대로, 용량만 가볍게</p>
       </div>
     </div>
@@ -1556,7 +1556,7 @@ input.split-name-num:focus { background: rgba(255, 255, 255, .28); outline: 2px 
           </div>
           <div class="field">
             <label class="field-label" for="qrVcMemo">메모 <span class="sub">— 선택 (소속·직함 등)</span></label>
-            <input type="text" id="qrVcMemo" placeholder="이미지 다이어트 · 개발" autocomplete="off">
+            <input type="text" id="qrVcMemo" placeholder="이미지 랩 · 개발" autocomplete="off">
           </div>
         </div>
         <p class="muted" style="margin:8px 0 0">스캔하면 연락처 저장을 제안해요</p>
@@ -2239,7 +2239,7 @@ input.split-name-num:focus { background: rgba(255, 255, 255, .28); outline: 2px 
     var url = shareLink();
     var t = curTab || tabs[0];
     if (navigator.share) {
-      return navigator.share({ title: '이미지 다이어트 — ' + t.label, text: t.desc + ' · 100% 브라우저 처리, 업로드 없음', url: url })
+      return navigator.share({ title: '이미지 랩 — ' + t.label, text: t.desc + ' · 100% 브라우저 처리, 업로드 없음', url: url })
         .then(function () { return 'shared'; })
         .catch(function (err) {
           if (err && err.name === 'AbortError') return 'canceled';
@@ -6217,7 +6217,7 @@ input.split-name-num:focus { background: rgba(255, 255, 255, .28); outline: 2px 
     begin(2);
     push('<< /Type /Pages /Kids [' + kids.join(' ') + '] /Count ' + pages.length + ' >>\nendobj\n');
     begin(3);
-    push('<< /Title ' + pdfStrOut(title) + ' /Producer (Image Diet) >>\nendobj\n');
+    push('<< /Title ' + pdfStrOut(title) + ' /Producer (img-lab) >>\nendobj\n');
     var fmt = function (v) { return Math.round(v * 100) / 100; };
     pages.forEach(function (pg, i2) {
       var pn = 4 + i2 * 3, xn = pn + 1, cn = pn + 2;

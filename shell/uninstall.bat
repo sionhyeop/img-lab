@@ -3,7 +3,7 @@ setlocal enabledelayedexpansion
 chcp 65001 >nul
 
 rem install.bat 으로 등록한 우클릭 메뉴 항목을 제거합니다.
-set "MENU=이미지 다이어트로 압축"
+set "MENU=이미지 랩으로 압축"
 for %%E in (.jpg .jpeg .png .webp .bmp) do (
     reg delete "HKCU\Software\Classes\SystemFileAssociations\%%E\shell\ImageDiet" /f >nul 2>&1
 )

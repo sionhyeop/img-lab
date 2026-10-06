@@ -1,4 +1,4 @@
-"""이미지 다이어트 — 탭 창 (압축/Base64/SVG/PDF). 진입점.
+"""이미지 랩 — 탭 창 (압축/Base64/SVG/PDF). 진입점.
 사용법: pythonw compress_gui.pyw <이미지경로> ..."""
 import os
 import sys
@@ -21,7 +21,7 @@ class Toolkit:
     def __init__(self, root, files):
         self.root, self.files = root, files
         p = self.pal = W.palette(W.is_dark())
-        root.title("이미지 다이어트")
+        root.title("이미지 랩")
         root.configure(bg=p["card"])
         root.resizable(False, False)
         try:
@@ -36,7 +36,7 @@ class Toolkit:
             tk.Label(hdr, image=self._logo, bg=p["card"]).pack(side="left")
         except Exception:
             pass
-        tk.Label(hdr, text="  이미지 다이어트", bg=p["card"], fg=p["ink"],
+        tk.Label(hdr, text="  이미지 랩", bg=p["card"], fg=p["ink"],
                  font=("Segoe UI", 13, "bold")).pack(side="left")
         tk.Label(hdr, text="파일 %d개" % len(files), bg=p["card"], fg=p["sub"],
                  font=("Segoe UI", 9)).pack(side="right")
@@ -79,7 +79,7 @@ def main():
         return  # 형제 인스턴스 — 서버로 전달 후 종료
     if not files:
         root = tk.Tk(); root.withdraw()
-        messagebox.showinfo("이미지 다이어트", "압축할 이미지를 선택한 뒤 우클릭하세요.")
+        messagebox.showinfo("이미지 랩", "압축할 이미지를 선택한 뒤 우클릭하세요.")
         return
     root = tk.Tk()
     Toolkit(root, files)

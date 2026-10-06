@@ -47,7 +47,7 @@ class PdfView(tk.Frame):
 
     def _make(self):
         if not self.files:
-            messagebox.showerror("이미지 다이어트", "이미지가 없습니다.")
+            messagebox.showerror("이미지 랩", "이미지가 없습니다.")
             return
         out = filedialog.asksaveasfilename(defaultextension=".pdf",
                                            filetypes=[("PDF", "*.pdf")], initialfile="images.pdf")
@@ -55,6 +55,6 @@ class PdfView(tk.Frame):
             return
         try:
             saved = pdftool.images_to_pdf(self.files, out, fit=self.fit.value)
-            messagebox.showinfo("이미지 다이어트", "저장됨: %s" % saved)
+            messagebox.showinfo("이미지 랩", "저장됨: %s" % saved)
         except Exception as e:
-            messagebox.showerror("이미지 다이어트", str(e))
+            messagebox.showerror("이미지 랩", str(e))

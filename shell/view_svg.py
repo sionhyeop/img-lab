@@ -117,13 +117,13 @@ class SvgView(tk.Frame):
             with open(out, "w", encoding="utf-8") as f:
                 f.write(svg)
             self._last = out
-            self._post(lambda: messagebox.showinfo("이미지 다이어트", "저장됨: %s" % out))
+            self._post(lambda: messagebox.showinfo("이미지 랩", "저장됨: %s" % out))
         except Exception as e:
-            self._post(lambda: messagebox.showerror("이미지 다이어트", str(e)))
+            self._post(lambda: messagebox.showerror("이미지 랩", str(e)))
 
     def _open(self):
         if self._last and os.path.exists(self._last):
             try:
                 os.startfile(self._last)  # noqa: WPS (Windows 전용)
             except Exception as e:
-                messagebox.showerror("이미지 다이어트", "열기 실패: %s" % e)
+                messagebox.showerror("이미지 랩", "열기 실패: %s" % e)

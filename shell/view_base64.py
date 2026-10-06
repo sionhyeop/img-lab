@@ -87,12 +87,12 @@ class Base64View(tk.Frame):
             return
         self.clipboard_clear()
         self.clipboard_append(self._variants[key])
-        messagebox.showinfo("이미지 다이어트", "복사했습니다.")
+        messagebox.showinfo("이미지 랩", "복사했습니다.")
 
     def _save(self):
         text = self.dec.get("1.0", "end")
         if not text.strip():
-            messagebox.showerror("이미지 다이어트", "Base64 문자열을 붙여넣으세요.")
+            messagebox.showerror("이미지 랩", "Base64 문자열을 붙여넣으세요.")
             return
         out = filedialog.asksaveasfilename(defaultextension=".png",
                                            filetypes=[("이미지", "*.png *.jpg *.webp *.bmp *.gif")])
@@ -100,9 +100,9 @@ class Base64View(tk.Frame):
             return
         try:
             saved = b64tool.decode_to_file(text, out)
-            messagebox.showinfo("이미지 다이어트", "저장됨: %s" % saved)
+            messagebox.showinfo("이미지 랩", "저장됨: %s" % saved)
         except ValueError as e:
-            messagebox.showerror("이미지 다이어트", str(e))
+            messagebox.showerror("이미지 랩", str(e))
 
     def _upd_incount(self):
         try:

@@ -30,7 +30,7 @@ if not defined PYW (
 echo 엔진: "%PYW%"
 echo 스크립트: "%GUI%"
 
-set "MENU=이미지 다이어트로 압축"
+set "MENU=이미지 랩으로 압축"
 for %%E in (.jpg .jpeg .png .webp .bmp) do (
     set "KEY=HKCU\Software\Classes\SystemFileAssociations\%%E\shell\ImageDiet"
     reg add "!KEY!" /ve /d "!MENU!" /f >nul

@@ -1,4 +1,4 @@
-"""이미지 다이어트 압축 엔진 (UI 없음). Pillow 기반 순수 함수 모음."""
+"""이미지 랩 압축 엔진 (UI 없음). Pillow 기반 순수 함수 모음."""
 import os
 import io
 from PIL import Image, ImageOps

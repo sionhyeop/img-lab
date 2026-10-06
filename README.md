@@ -1,4 +1,4 @@
-# 이미지 다이어트 (Image Diet)
+# 이미지 랩 (img-lab)
 
 화질은 그대로, 용량만 가볍게. **서버 업로드가 전혀 없는** 100% 브라우저 이미지 압축 도구입니다.
 Adobe InDesign의 이미지 다운샘플링 방식에서 영감을 받았습니다 — 300KB 이미지를 60KB로 줄이고,
@@ -47,7 +47,7 @@ HTML에 그대로 붙여넣을 수 있는 Base64 문자열까지 뽑아줍니다
 ```bash
 git init -b main
 git add .
-git commit -m "image diet"
+git commit -m "img-lab"
 gh repo create img-lab --public --source=. --push
 gh api -X POST "repos/{owner}/img-lab/pages" -f "source[branch]=main" -f "source[path]=/"
 ```
@@ -60,7 +60,7 @@ gh api -X POST "repos/{owner}/img-lab/pages" -f "source[branch]=main" -f "source
    - GitHub 페이지에서 **Code → Download ZIP** 후 압축 해제, 또는
    - `git clone https://github.com/sionhyeop/img-lab.git`
 2. **설치** — 압축 해제/클론한 폴더의 `shell\install.bat` 더블클릭 (관리자 권한 불필요).
-3. 이미지 파일을 우클릭 → **"이미지 다이어트로 압축"** → 압축/Base64/SVG/PDF 탭 창이 열립니다.
+3. 이미지 파일을 우클릭 → **"이미지 랩으로 압축"** → 압축/Base64/SVG/PDF 탭 창이 열립니다.
 
 > `shell` 폴더는 통째로 한 자리에 두세요. 옮겼다면 옮긴 위치에서 `install.bat`을 다시 실행하면 경로가 갱신됩니다. 제거는 `shell\uninstall.bat`. 자세한 내용은 [`shell/README.md`](shell/README.md).
 
