@@ -1651,12 +1651,13 @@ input.split-name-num:focus { background: rgba(255, 255, 255, .28); outline: 2px 
           </div>
         </div>
         <div class="field field-wide">
-          <label class="field-label" for="qrCaption">로고·이름 새기기 <span class="sub">— 글자는 QR 아래나 위에, 이미지는 가운데에 (선택 · 이미지를 넣으면 오류 정정 H)</span></label>
+          <label class="field-label" for="qrCaption">로고·이름 새기기 <span class="sub">— 글자는 위·가운데·아래, 이미지는 가운데에 (선택 · 가운데에 넣으면 오류 정정 H)</span></label>
           <div class="qr-cap-row">
             <input type="text" id="qrCaption" maxlength="40" placeholder="이름·제목 입력 (예: 가을 세일 이벤트)" autocomplete="off">
             <div class="chips" id="qrCapPosChips" aria-label="글자 위치">
-              <button type="button" class="chip on" data-qrcap="bottom">아래</button>
               <button type="button" class="chip" data-qrcap="top">위</button>
+              <button type="button" class="chip" data-qrcap="center">가운데</button>
+              <button type="button" class="chip on" data-qrcap="bottom">아래</button>
             </div>
             <button class="btn" id="qrLogoBtn" type="button">이미지 넣기</button>
             <button class="btn" id="qrLogoClear" type="button" hidden>이미지 빼기</button>
@@ -5319,7 +5320,7 @@ input.split-name-num:focus { background: rgba(255, 255, 255, .28); outline: 2px 
      비워 스캔을 지키고, 바깥 2모듈부터 글자 띠를 겹쳐 놓는다. 넘치면 글자를 줄이고, 그래도 넘치면 말줄임. */
   function qrCaptionLayout(side, cell, off) {
     var text = qrState.caption;
-    if (!text) return null;
+    if (!text || qrState.capPos === 'center') return null;
     if (!qrMeasureCtx) qrMeasureCtx = document.createElement('canvas').getContext('2d');
     qrMeasureCtx.font = '700 100px ' + QR_CAP_FAMILY;
     var per100 = function (s) { return qrMeasureCtx.measureText(s).width / 100; };
@@ -5338,6 +5339,30 @@ input.split-name-num:focus { background: rgba(255, 255, 255, .28); outline: 2px 
       text: text, fs: fs, height: side + extra, qrDy: top ? extra : 0,
       cy: top ? band / 2 : side - off - 2 * cell + band / 2
     };
+  }
+
+  function qrCenterTextOn() { return !!qrState.caption && qrState.capPos === 'center'; }
+  /* 가운데 글자 — 로고 자리에 배경색 상자를 깔고 글자를 얹는다. 상자는 모듈 격자에 맞추고
+     가로 40%·세로 16% 이내(가려지는 면적 약 6% — 오류 정정 H의 30% 안)로 제한한다. */
+  function qrCenterLayout(side, cell, off, n) {
+    if (!qrCenterTextOn()) return null;
+    if (!qrMeasureCtx) qrMeasureCtx = document.createElement('canvas').getContext('2d');
+    qrMeasureCtx.font = '700 100px ' + QR_CAP_FAMILY;
+    var text = qrState.caption;
+    var per100 = function (s) { return qrMeasureCtx.measureText(s).width / 100; };
+    var maxW = n * cell * 0.4, maxH = n * cell * 0.16;
+    var fs = Math.min(maxH / 1.7, (maxW - cell * 2) / Math.max(per100(text), 0.01));
+    var minFs = side * 0.03;
+    if (fs < minFs) {
+      fs = minFs;
+      while (text.length > 1 && per100(text + '…') * fs > maxW - cell * 2) text = text.slice(0, -1);
+      text += '…';
+    }
+    var cols = Math.min(n, Math.ceil((per100(text) * fs + cell * 2) / cell)), rows = Math.ceil(fs * 1.7 / cell);
+    if ((n - cols) % 2) cols++;
+    if ((n - rows) % 2) rows++;
+    var x0 = off + (4 + (n - cols) / 2) * cell, y0 = off + (4 + (n - rows) / 2) * cell;
+    return { text: text, fs: fs, x: x0, y: y0, w: cols * cell, h: rows * cell, cx: side / 2, cy: y0 + rows * cell / 2 };
   }
 
   /* 오프스크린에 요청 크기 그대로 그린다 — 콰이어트 존 4모듈, 셀 정수 스냅 후 중앙 정렬.
@@ -5360,7 +5385,16 @@ input.split-name-num:focus { background: rgba(255, 255, 255, .28); outline: 2px 
         if (qr.isDark(r, col)) x.fillRect(off + (col + 4) * cell, dy + off + (r + 4) * cell, cell, cell);
       }
     }
-    if (qrState.logo) {
+    var mid = qrCenterLayout(px, cell, off, n);
+    if (mid) {
+      x.fillStyle = qrState.bg;
+      x.fillRect(mid.x, dy + mid.y, mid.w, mid.h);
+      x.fillStyle = qrState.fg;
+      x.font = '700 ' + mid.fs.toFixed(1) + 'px ' + QR_CAP_FAMILY;
+      x.textAlign = 'center';
+      x.textBaseline = 'middle';
+      x.fillText(mid.text, mid.cx, dy + Math.round(mid.cy));
+    } else if (qrState.logo) {
       var box = Math.round(px * 0.22);
       var pad = Math.round(box * 0.1);
       var bx = Math.round((px - box) / 2);
@@ -5450,15 +5484,21 @@ input.split-name-num:focus { background: rgba(255, 255, 255, .28); outline: 2px 
     var s = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + total + ' ' + r3(hgt) + '">' +
       '<rect width="' + total + '" height="' + r3(hgt) + '" fill="' + qrState.bg + '"/>' +
       '<path d="' + d.join('') + '" fill="' + qrState.fg + '" shape-rendering="crispEdges"' + (dy ? ' transform="translate(0 ' + r3(dy) + ')"' : '') + '/>';
-    if (qrState.logo && qrState.logoUrl) {
+    var mid = qrCenterLayout(total, 1, 0, n);
+    var esc = function (t) { return t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); };
+    var fam = QR_CAP_FAMILY.replace(/"/g, "'");
+    if (mid) {
+      s += '<rect x="' + mid.x + '" y="' + r3(dy + mid.y) + '" width="' + mid.w + '" height="' + mid.h + '" fill="' + qrState.bg + '"/>' +
+        '<text x="' + r3(mid.cx) + '" y="' + r3(dy + mid.cy) + '" text-anchor="middle" dominant-baseline="central" font-weight="700" font-size="' + r3(mid.fs) +
+        '" font-family="' + fam + '" fill="' + qrState.fg + '">' + esc(mid.text) + '</text>';
+    } else if (qrState.logo && qrState.logoUrl) {
       var box = total * 0.22, bx = (total - box) / 2, pad = box * 0.1;
       s += '<rect x="' + bx + '" y="' + r3(dy + bx) + '" width="' + box + '" height="' + box + '" fill="#ffffff"/>' +
         '<image href="' + qrState.logoUrl + '" x="' + (bx + pad) + '" y="' + r3(dy + bx + pad) + '" width="' + (box - pad * 2) + '" height="' + (box - pad * 2) + '" preserveAspectRatio="xMidYMid meet"/>';
     }
     if (cap) {
-      var esc = cap.text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
       s += '<text x="' + (total / 2) + '" y="' + r3(cap.cy) + '" text-anchor="middle" dominant-baseline="central" font-weight="700" font-size="' + r3(cap.fs) +
-        '" font-family="' + QR_CAP_FAMILY.replace(/"/g, "'") + '" fill="' + qrState.fg + '">' + esc + '</text>';
+        '" font-family="' + fam + '" fill="' + qrState.fg + '">' + esc(cap.text) + '</text>';
     }
     return s + '</svg>';
   }
@@ -5533,8 +5573,13 @@ input.split-name-num:focus { background: rgba(255, 255, 255, .28); outline: 2px 
   $('#qrBg').addEventListener('input', function () { qrState.bg = this.value; qrContrastCheck(); qrScheduleRender(); });
   gifBindChips('#qrEcChips', function (b) { qrState.ec = b.dataset.qrec; qrState.ecAuto = null; qrRender(); });
   $('#qrTrim').addEventListener('change', qrRender);
-  $('#qrCaption').addEventListener('input', function () { qrState.caption = this.value.trim(); qrScheduleRender(); });
-  gifBindChips('#qrCapPosChips', function (b) { qrState.capPos = b.dataset.qrcap; qrRender(); });
+  $('#qrCaption').addEventListener('input', function () { qrState.caption = this.value.trim(); qrSyncAutoEc(); qrScheduleRender(); });
+  gifBindChips('#qrCapPosChips', function (b) {
+    qrState.capPos = b.dataset.qrcap;
+    if (qrState.logo && qrCenterTextOn()) toast('가운데에는 이미지 대신 글자가 들어가요.');
+    qrSyncAutoEc();
+    qrRender();
+  });
   gifBindChips('#qrSizeChips', function (b) { qrState.size = parseInt(b.dataset.qrsize, 10); qrRender(); });
 
   var QR_PRESETS = {
@@ -5547,6 +5592,14 @@ input.split-name-num:focus { background: rgba(255, 255, 255, .28); outline: 2px 
     b.addEventListener('click', function () {
       var p = QR_PRESETS[b.dataset.qrpreset];
       if (!p) return;
+      /* 켜진 프리셋을 다시 누르면 해제 — 그 프리셋이 채운 값만 비우고 직접 고친 값은 둔다 */
+      if (b.classList.contains('on')) {
+        b.classList.remove('on');
+        if ($('#qrUtmSource').value === p.source) $('#qrUtmSource').value = '';
+        if ($('#qrUtmMedium').value === p.medium) $('#qrUtmMedium').value = '';
+        qrScheduleRender();
+        return;
+      }
       document.querySelectorAll('#qrUtmPresets .chip').forEach(function (o) { o.classList.toggle('on', o === b); });
       $('#qrUtmSource').value = p.source;
       $('#qrUtmMedium').value = p.medium;
@@ -5559,6 +5612,18 @@ input.split-name-num:focus { background: rgba(255, 255, 255, .28); outline: 2px 
     qrState.ec = ec;
     document.querySelectorAll('#qrEcChips .chip').forEach(function (o) { o.classList.toggle('on', o.dataset.qrec === ec); });
   }
+  /* 가운데를 가리는 것(이미지·가운데 글자)이 있으면 오류 정정을 H로, 없어지면 원래 단계로 */
+  function qrSyncAutoEc() {
+    var need = !!qrState.logo || qrCenterTextOn();
+    if (need && qrState.ec !== 'H') {
+      qrState.ecAuto = qrState.ec;
+      qrSetEc('H');
+      toast('가운데가 가려지는 만큼 견디도록 오류 정정을 H로 올렸어요.');
+    } else if (!need && qrState.ecAuto) {
+      qrSetEc(qrState.ecAuto);
+      qrState.ecAuto = null;
+    }
+  }
   function qrSetLogo(file) {
     if (!file || !/^image\//.test(file.type)) { toast('로고는 이미지 파일만 넣을 수 있어요.'); return; }
     blobToDataURL(file).then(function (uri) {
@@ -5568,11 +5633,8 @@ input.split-name-num:focus { background: rgba(255, 255, 255, .28); outline: 2px 
         qrState.logoUrl = uri;   /* SVG 임베드용 data URI — 파일은 밖으로 안 나간다 */
         $('#qrLogoClear').hidden = false;
         $('#qrLogoBtn').textContent = '이미지 바꾸기';
-        if (qrState.ec !== 'H') {
-          qrState.ecAuto = qrState.ec;   /* 로고를 빼면 원래 단계로 되돌린다 */
-          qrSetEc('H');
-          toast('로고가 가리는 부분을 견디도록 오류 정정을 H로 올렸어요.');
-        }
+        if (qrCenterTextOn()) toast('가운데에 글자를 넣는 중이라 이미지는 글자 위치를 위·아래로 바꾸면 보여요.');
+        qrSyncAutoEc();
         qrRender();
       };
       img.onerror = function () { toast('로고 이미지를 읽지 못했어요.'); };
@@ -5587,7 +5649,7 @@ input.split-name-num:focus { background: rgba(255, 255, 255, .28); outline: 2px 
   $('#qrLogoClear').addEventListener('click', function () {
     qrState.logo = null;
     qrState.logoUrl = null;
-    if (qrState.ecAuto) { qrSetEc(qrState.ecAuto); qrState.ecAuto = null; }
+    qrSyncAutoEc();
     this.hidden = true;
     $('#qrLogoBtn').textContent = '이미지 넣기';
     qrRender();
