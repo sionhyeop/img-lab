@@ -1650,22 +1650,17 @@ input.split-name-num:focus { background: rgba(255, 255, 255, .28); outline: 2px 
             <button type="button" class="chip" data-qrsize="1200">1200px</button>
           </div>
         </div>
-        <div class="field">
-          <span class="field-label">로고 <span class="sub">— 중앙에 넣어요 (자동으로 오류 정정 H)</span></span>
-          <div class="btn-row" style="margin-top:0">
-            <button class="btn" id="qrLogoBtn" type="button">로고 넣기</button>
-            <button class="btn" id="qrLogoClear" type="button" hidden>로고 빼기</button>
-            <input type="file" id="qrLogoFile" accept="image/*" hidden>
-          </div>
-        </div>
         <div class="field field-wide">
-          <label class="field-label" for="qrCaption">이름·제목 새기기 <span class="sub">— QR 아래나 위에 글자를 넣어요 (선택)</span></label>
+          <label class="field-label" for="qrCaption">로고·이름 새기기 <span class="sub">— 글자는 QR 아래나 위에, 이미지는 가운데에 (선택 · 이미지를 넣으면 오류 정정 H)</span></label>
           <div class="qr-cap-row">
-            <input type="text" id="qrCaption" maxlength="40" placeholder="예: 가을 세일 이벤트" autocomplete="off">
-            <div class="chips" id="qrCapPosChips">
+            <input type="text" id="qrCaption" maxlength="40" placeholder="이름·제목 입력 (예: 가을 세일 이벤트)" autocomplete="off">
+            <div class="chips" id="qrCapPosChips" aria-label="글자 위치">
               <button type="button" class="chip on" data-qrcap="bottom">아래</button>
               <button type="button" class="chip" data-qrcap="top">위</button>
             </div>
+            <button class="btn" id="qrLogoBtn" type="button">이미지 넣기</button>
+            <button class="btn" id="qrLogoClear" type="button" hidden>이미지 빼기</button>
+            <input type="file" id="qrLogoFile" accept="image/*" hidden>
           </div>
         </div>
       </div>
@@ -5572,7 +5567,7 @@ input.split-name-num:focus { background: rgba(255, 255, 255, .28); outline: 2px 
         qrState.logo = img;
         qrState.logoUrl = uri;   /* SVG 임베드용 data URI — 파일은 밖으로 안 나간다 */
         $('#qrLogoClear').hidden = false;
-        $('#qrLogoBtn').textContent = '로고 바꾸기';
+        $('#qrLogoBtn').textContent = '이미지 바꾸기';
         if (qrState.ec !== 'H') {
           qrState.ecAuto = qrState.ec;   /* 로고를 빼면 원래 단계로 되돌린다 */
           qrSetEc('H');
@@ -5594,7 +5589,7 @@ input.split-name-num:focus { background: rgba(255, 255, 255, .28); outline: 2px 
     qrState.logoUrl = null;
     if (qrState.ecAuto) { qrSetEc(qrState.ecAuto); qrState.ecAuto = null; }
     this.hidden = true;
-    $('#qrLogoBtn').textContent = '로고 넣기';
+    $('#qrLogoBtn').textContent = '이미지 넣기';
     qrRender();
   });
 
