@@ -5289,13 +5289,12 @@ input.split-name-num:focus { background: rgba(255, 255, 255, .28); outline: 2px 
         if (amt) line += '\n' + Number(amt).toLocaleString('ko-KR') + '원';
         return line;
       }
-      /* 토스 송금 딥링크 — 가게 계좌 QR 스티커들이 쓰는 사실상 표준 */
-      /* 딥링크는 숫자만 받는 계좌번호(하이픈 제거)와 '은행'을 뗀 은행 이름(국민은행 → 국민)으로 —
-         토스가 만드는 송금 QR과 같은 표기. 범용 텍스트(복사용)는 읽기 좋게 하이픈을 그대로 둔다. */
-      var tossBank = bank.replace(/\s+/g, '').replace(/은행$/, '') || bank;
-      var s2 = 'supertoss://send?bank=' + encodeURIComponent(tossBank) + '&accountNo=' + acct.replace(/-/g, '');
-      if (amt) s2 += '&amount=' + amt;
-      return s2 + '&origin=qr';
+      /* 토스 송금 딥링크 — 토스 앱이 만드는 송금 QR과 글자 하나까지 같은 형식으로 맞춘다:
+         supertoss://send?amount=500&bank=카카오뱅크&accountNo=3333…&origin=qr
+         토스는 파라미터 순서가 다르면(amount가 뒤에 오면) '계좌 정보가 올바르지 않다'며 거부한다.
+         계좌번호는 숫자만, 은행 이름은 입력 그대로(토스 표기 예: 카카오뱅크). 복사용 텍스트는 하이픈 유지. */
+      return 'supertoss://send?' + (amt ? 'amount=' + amt + '&' : '') + 'bank=' + encodeURIComponent(bank) +
+        '&accountNo=' + acct.replace(/-/g, '') + '&origin=qr';
     }
     if (t === 'map') {
       var mu = $('#qrMapUrl').value.trim();
