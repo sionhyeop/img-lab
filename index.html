@@ -512,6 +512,8 @@ textarea {
   min-width: 0; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   font-size: 13px; line-height: 1.55; overflow-wrap: anywhere; word-break: break-all;
 }
+.qr-cap-row { display: flex; flex-wrap: wrap; gap: 8px 10px; align-items: center; }
+.qr-cap-row input { flex: 1 1 200px; min-width: 0; }
 .url-done { margin: 0; padding-top: 12px; border-top: 1px solid var(--border); font-size: 13px; color: var(--muted); }
 .ta-wrap textarea { margin-top: 0; }
 /* 문자 수 세기 — 박스 오른쪽 아래 모서리 */
@@ -1484,6 +1486,7 @@ input.split-name-num:focus { background: rgba(255, 255, 255, .28); outline: 2px 
       <div class="field">
         <label class="field-label" for="qrText">URL 또는 텍스트</label>
         <input type="text" id="qrText" placeholder="https://example.com/page" autocomplete="off" spellcheck="false" style="width:100%">
+        <label class="check-label" style="margin-top:8px"><input type="checkbox" id="qrTrim" checked> 링크 다듬기 <span class="sub">— 추적용 파라미터(utm·fbclid 등)를 지워 QR을 단순하게</span></label>
       </div>
       <details id="qrUtmBox" style="margin-top:12px">
         <summary class="field-label" style="cursor:pointer; display:list-item">UTM 캠페인 파라미터 <span class="sub">— 유입 경로 추적용 (선택)</span></summary>
@@ -1630,10 +1633,10 @@ input.split-name-num:focus { background: rgba(255, 255, 255, .28); outline: 2px 
           </div>
         </div>
         <div class="field">
-          <span class="field-label">오류 정정 <span class="sub">— 높을수록 손상·로고에 강해요</span></span>
+          <span class="field-label">오류 정정 <span class="sub">— 낮을수록 단순, 높을수록 튼튼</span></span>
           <div class="chips" id="qrEcChips">
-            <button type="button" class="chip" data-qrec="L">L (7%)</button>
-            <button type="button" class="chip on" data-qrec="M">M (15%)</button>
+            <button type="button" class="chip on" data-qrec="L">L (7%)</button>
+            <button type="button" class="chip" data-qrec="M">M (15%)</button>
             <button type="button" class="chip" data-qrec="Q">Q (25%)</button>
             <button type="button" class="chip" data-qrec="H">H (30%)</button>
           </div>
@@ -1653,6 +1656,16 @@ input.split-name-num:focus { background: rgba(255, 255, 255, .28); outline: 2px 
             <button class="btn" id="qrLogoBtn" type="button">로고 넣기</button>
             <button class="btn" id="qrLogoClear" type="button" hidden>로고 빼기</button>
             <input type="file" id="qrLogoFile" accept="image/*" hidden>
+          </div>
+        </div>
+        <div class="field field-wide">
+          <label class="field-label" for="qrCaption">이름·제목 새기기 <span class="sub">— QR 아래나 위에 글자를 넣어요 (선택)</span></label>
+          <div class="qr-cap-row">
+            <input type="text" id="qrCaption" maxlength="40" placeholder="예: 가을 세일 이벤트" autocomplete="off">
+            <div class="chips" id="qrCapPosChips">
+              <button type="button" class="chip on" data-qrcap="bottom">아래</button>
+              <button type="button" class="chip" data-qrcap="top">위</button>
+            </div>
           </div>
         </div>
       </div>
@@ -5174,7 +5187,7 @@ input.split-name-num:focus { background: rgba(255, 255, 255, .28); outline: 2px 
     return qrLibReady;
   }
 
-  var qrState = { type: 'url', wifiSec: 'WPA', ec: 'M', fg: '#000000', bg: '#ffffff', size: 600, logo: null, logoUrl: null, seq: 0 };
+  var qrState = { type: 'url', wifiSec: 'WPA', ec: 'L', ecAuto: null, caption: '', capPos: 'bottom', fg: '#000000', bg: '#ffffff', size: 600, logo: null, logoUrl: null, seq: 0 };
   var qrLast = null;   /* { qr, count, data } — 마지막 렌더 결과 (SVG·저장용) */
   var qrTimer = null;
 
@@ -5186,8 +5199,17 @@ input.split-name-num:focus { background: rgba(255, 255, 255, .28); outline: 2px 
     };
   }
   /* UTM을 붙인 최종 URL — 기존 쿼리(?→&)·해시(# 앞 삽입) 보존, URL이 아니면 원문 그대로 */
+  /* '링크 다듬기' — 링크 정리 탭과 같은 규칙으로 추적 파라미터만 지운다.
+     입력이 한글을 그대로 쓴 주소면 그 표기를, 인코딩된 주소면 인코딩을 유지해 바이트가 늘지 않게 한다. */
+  function qrTrimmedUrl(t) {
+    if (!$('#qrTrim').checked || !/^https?:\/\//i.test(t)) return { url: t, removed: '' };
+    var c = urlClean(t);
+    if (!c || c.error) return { url: t, removed: '' };
+    var gone = c.notes.filter(function (s) { return / 제거$/.test(s) && !/^빈 /.test(s); })[0] || '';
+    return { url: /[^\x00-\x7F]/.test(t) ? c.readable : c.safe, removed: gone };
+  }
   function qrFinalUrlStr() {
-    var t = $('#qrText').value.trim();
+    var t = qrTrimmedUrl($('#qrText').value.trim()).url;
     if (!t) return '';
     var u = qrUtmVals();
     var pairs = [];
@@ -5295,21 +5317,52 @@ input.split-name-num:focus { background: rgba(255, 255, 255, .28); outline: 2px 
     else warn.textContent = '';
   }
 
-  /* 오프스크린에 요청 크기 그대로 그린다 — 콰이어트 존 4모듈, 셀 정수 스냅 후 중앙 정렬 */
+  var QR_CAP_FAMILY = 'Pretendard, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", sans-serif';
+  var qrMeasureCtx = null;
+  /* 이름·제목 글자 띠 배치 — 정사각 QR 한 변(side)과 셀 크기(cell)·여백(off)·모듈 수(n) 기준.
+     단위는 PNG면 픽셀, SVG면 모듈이라 같은 식을 쓴다. 콰이어트 존(4모듈) 중 QR에 붙은 2모듈은
+     비워 스캔을 지키고, 바깥 2모듈부터 글자 띠를 겹쳐 놓는다. 넘치면 글자를 줄이고, 그래도 넘치면 말줄임. */
+  function qrCaptionLayout(side, cell, off) {
+    var text = qrState.caption;
+    if (!text) return null;
+    if (!qrMeasureCtx) qrMeasureCtx = document.createElement('canvas').getContext('2d');
+    qrMeasureCtx.font = '700 100px ' + QR_CAP_FAMILY;
+    var per100 = function (s) { return qrMeasureCtx.measureText(s).width / 100; };
+    var maxW = side - 2 * (off + 3 * cell);
+    var fs = Math.min(side * 0.072, maxW / Math.max(per100(text), 0.01));
+    var minFs = side * 0.036;
+    if (fs < minFs) {
+      fs = minFs;
+      while (text.length > 1 && per100(text + '…') * fs > maxW) text = text.slice(0, -1);
+      text += '…';
+    }
+    var band = fs * 1.8;
+    var extra = Math.max(0, band - (off + 2 * cell));
+    var top = qrState.capPos === 'top';
+    return {
+      text: text, fs: fs, height: side + extra, qrDy: top ? extra : 0,
+      cy: top ? band / 2 : side - off - 2 * cell + band / 2
+    };
+  }
+
+  /* 오프스크린에 요청 크기 그대로 그린다 — 콰이어트 존 4모듈, 셀 정수 스냅 후 중앙 정렬.
+     글자를 새기면 그만큼 세로로 길어진다 (QR 부분 크기는 그대로) */
   function qrDrawCanvas(px) {
     var qr = qrLast.qr, n = qrLast.count;
     var total = n + 8;
     var cell = Math.max(1, Math.floor(px / total));
     var off = Math.round((px - cell * total) / 2);
+    var cap = qrCaptionLayout(px, cell, off);
+    var dy = cap ? Math.round(cap.qrDy) : 0;
     var c = document.createElement('canvas');
-    c.width = px; c.height = px;
+    c.width = px; c.height = cap ? Math.round(cap.height) : px;
     var x = c.getContext('2d');
     x.fillStyle = qrState.bg;
-    x.fillRect(0, 0, px, px);
+    x.fillRect(0, 0, c.width, c.height);
     x.fillStyle = qrState.fg;
     for (var r = 0; r < n; r++) {
       for (var col = 0; col < n; col++) {
-        if (qr.isDark(r, col)) x.fillRect(off + (col + 4) * cell, off + (r + 4) * cell, cell, cell);
+        if (qr.isDark(r, col)) x.fillRect(off + (col + 4) * cell, dy + off + (r + 4) * cell, cell, cell);
       }
     }
     if (qrState.logo) {
@@ -5317,11 +5370,18 @@ input.split-name-num:focus { background: rgba(255, 255, 255, .28); outline: 2px 
       var pad = Math.round(box * 0.1);
       var bx = Math.round((px - box) / 2);
       x.fillStyle = '#ffffff';
-      x.fillRect(bx, bx, box, box);
+      x.fillRect(bx, dy + bx, box, box);
       var iw = qrState.logo.naturalWidth || qrState.logo.width, ih = qrState.logo.naturalHeight || qrState.logo.height;
       var k = Math.min((box - pad * 2) / iw, (box - pad * 2) / ih);
       var dw = Math.max(1, Math.round(iw * k)), dh = Math.max(1, Math.round(ih * k));
-      x.drawImage(qrState.logo, Math.round((px - dw) / 2), Math.round((px - dh) / 2), dw, dh);
+      x.drawImage(qrState.logo, Math.round((px - dw) / 2), dy + Math.round((px - dh) / 2), dw, dh);
+    }
+    if (cap) {
+      x.fillStyle = qrState.fg;
+      x.font = '700 ' + cap.fs.toFixed(1) + 'px ' + QR_CAP_FAMILY;
+      x.textAlign = 'center';
+      x.textBaseline = 'middle';
+      x.fillText(cap.text, px / 2, Math.round(cap.cy));
     }
     return c;
   }
@@ -5333,7 +5393,8 @@ input.split-name-num:focus { background: rgba(255, 255, 255, .28); outline: 2px 
       fu.textContent = data ? ('담기는 내용' + ($('#qrPlain').checked ? ' (복사용 텍스트)' : '') + ': ' + data) : '';
     } else {
       var raw = $('#qrText').value.trim();
-      if (data && data !== raw) fu.textContent = '최종 URL: ' + data;
+      var gone = data ? qrTrimmedUrl(raw).removed : '';
+      if (data && data !== raw) fu.textContent = '최종 URL: ' + data + (gone ? ' — 링크 다듬기: ' + gone : '');
       else if (raw && !/^https?:\/\//i.test(raw) && (qrUtmVals().source || qrUtmVals().medium || qrUtmVals().campaign || qrUtmVals().content || qrUtmVals().term)) fu.textContent = 'URL이 아니라서 UTM은 붙이지 않았어요 — 입력한 텍스트 그대로 담아요';
       else fu.textContent = '';
     }
@@ -5362,8 +5423,12 @@ input.split-name-num:focus { background: rgba(255, 255, 255, .28); outline: 2px 
       var prev = $('#qrCanvas');
       prev.width = big.width; prev.height = big.height;
       prev.getContext('2d').drawImage(big, 0, 0);
-      $('#qrStat').textContent = '버전 ' + Math.round((qrLast.count - 17) / 4) + ' · ' + qrLast.count + '×' + qrLast.count +
-        ' 모듈 · 오류 정정 ' + qrState.ec + (qrState.logo ? ' · 로고 포함' : '') + ' · ' + qrState.size + 'px';
+      var cnt = qrLast.count;
+      var dense = cnt <= 25 ? '아주 단순' : cnt <= 33 ? '단순' : cnt <= 45 ? '보통' : '촘촘';
+      $('#qrStat').textContent = cnt + '×' + cnt + ' 모듈(' + dense + ') · 버전 ' + Math.round((cnt - 17) / 4) +
+        ' · 오류 정정 ' + qrState.ec + (qrState.logo ? ' · 로고 포함' : '') + (qrState.caption ? ' · 글자 포함' : '') +
+        ' · ' + big.width + '×' + big.height + 'px' +
+        (cnt > 33 ? ' — 내용을 줄이거나 오류 정정을 낮추면 더 단순해져요' : '');
       $('#qrResult').hidden = false;
     })['catch'](function () {
       if (seq === qrState.seq) toast('QR 생성기를 불러오지 못했어요 — 새로고침 후 다시 시도해 주세요.');
@@ -5384,18 +5449,28 @@ input.split-name-num:focus { background: rgba(255, 255, 255, .28); outline: 2px 
         if (qrLast.qr.isDark(r, c)) d.push('M' + (c + 4) + ' ' + (r + 4) + 'h1v1h-1z');
       }
     }
-    var s = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + total + ' ' + total + '" shape-rendering="crispEdges">' +
-      '<rect width="' + total + '" height="' + total + '" fill="' + qrState.bg + '"/>' +
-      '<path d="' + d.join('') + '" fill="' + qrState.fg + '"/>';
+    var cap = qrCaptionLayout(total, 1, 0);
+    var dy = cap ? cap.qrDy : 0, hgt = cap ? cap.height : total;
+    var r3 = function (v) { return Math.round(v * 1000) / 1000; };
+    var s = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + total + ' ' + r3(hgt) + '">' +
+      '<rect width="' + total + '" height="' + r3(hgt) + '" fill="' + qrState.bg + '"/>' +
+      '<path d="' + d.join('') + '" fill="' + qrState.fg + '" shape-rendering="crispEdges"' + (dy ? ' transform="translate(0 ' + r3(dy) + ')"' : '') + '/>';
     if (qrState.logo && qrState.logoUrl) {
       var box = total * 0.22, bx = (total - box) / 2, pad = box * 0.1;
-      s += '<rect x="' + bx + '" y="' + bx + '" width="' + box + '" height="' + box + '" fill="#ffffff"/>' +
-        '<image href="' + qrState.logoUrl + '" x="' + (bx + pad) + '" y="' + (bx + pad) + '" width="' + (box - pad * 2) + '" height="' + (box - pad * 2) + '" preserveAspectRatio="xMidYMid meet"/>';
+      s += '<rect x="' + bx + '" y="' + r3(dy + bx) + '" width="' + box + '" height="' + box + '" fill="#ffffff"/>' +
+        '<image href="' + qrState.logoUrl + '" x="' + (bx + pad) + '" y="' + r3(dy + bx + pad) + '" width="' + (box - pad * 2) + '" height="' + (box - pad * 2) + '" preserveAspectRatio="xMidYMid meet"/>';
+    }
+    if (cap) {
+      var esc = cap.text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      s += '<text x="' + (total / 2) + '" y="' + r3(cap.cy) + '" text-anchor="middle" dominant-baseline="central" font-weight="700" font-size="' + r3(cap.fs) +
+        '" font-family="' + QR_CAP_FAMILY.replace(/"/g, "'") + '" fill="' + qrState.fg + '">' + esc + '</text>';
     }
     return s + '</svg>';
   }
 
   function qrFileSlug() {
+    var capSlug = qrState.caption.trim().replace(/[\\\/:*?"<>|\s]+/g, '_').slice(0, 40);
+    if (capSlug) return 'qr-' + capSlug;
     if (qrState.type === 'bank') {
       var bslug = $('#qrBankName').value.trim().replace(/[^\w가-힣.-]/g, '_') || 'bank';
       return ($('#qrPlain').checked ? 'qr-account-' : 'qr-send-') + bslug;
@@ -5461,7 +5536,10 @@ input.split-name-num:focus { background: rgba(255, 255, 255, .28); outline: 2px 
   });
   $('#qrFg').addEventListener('input', function () { qrState.fg = this.value; qrContrastCheck(); qrScheduleRender(); });
   $('#qrBg').addEventListener('input', function () { qrState.bg = this.value; qrContrastCheck(); qrScheduleRender(); });
-  gifBindChips('#qrEcChips', function (b) { qrState.ec = b.dataset.qrec; qrRender(); });
+  gifBindChips('#qrEcChips', function (b) { qrState.ec = b.dataset.qrec; qrState.ecAuto = null; qrRender(); });
+  $('#qrTrim').addEventListener('change', qrRender);
+  $('#qrCaption').addEventListener('input', function () { qrState.caption = this.value.trim(); qrScheduleRender(); });
+  gifBindChips('#qrCapPosChips', function (b) { qrState.capPos = b.dataset.qrcap; qrRender(); });
   gifBindChips('#qrSizeChips', function (b) { qrState.size = parseInt(b.dataset.qrsize, 10); qrRender(); });
 
   var QR_PRESETS = {
@@ -5496,6 +5574,7 @@ input.split-name-num:focus { background: rgba(255, 255, 255, .28); outline: 2px 
         $('#qrLogoClear').hidden = false;
         $('#qrLogoBtn').textContent = '로고 바꾸기';
         if (qrState.ec !== 'H') {
+          qrState.ecAuto = qrState.ec;   /* 로고를 빼면 원래 단계로 되돌린다 */
           qrSetEc('H');
           toast('로고가 가리는 부분을 견디도록 오류 정정을 H로 올렸어요.');
         }
@@ -5513,6 +5592,7 @@ input.split-name-num:focus { background: rgba(255, 255, 255, .28); outline: 2px 
   $('#qrLogoClear').addEventListener('click', function () {
     qrState.logo = null;
     qrState.logoUrl = null;
+    if (qrState.ecAuto) { qrSetEc(qrState.ecAuto); qrState.ecAuto = null; }
     this.hidden = true;
     $('#qrLogoBtn').textContent = '로고 넣기';
     qrRender();
