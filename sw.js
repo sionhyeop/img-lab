@@ -1,12 +1,12 @@
 /* 이미지 랩 — 오프라인 캐시 서비스 워커 */
-var CACHE = 'image-diet-v63';        /* 앱 셸 — 배포마다 새 버전으로 교체 */
+var CACHE = 'image-diet-v64';        /* 앱 셸 — 배포마다 새 버전으로 교체 */
 /* 모델·런타임 바이너리(models/, vendor/)는 파일 내용이 바뀌지 않으므로 앱 버전과
    분리된 캐시에 둔다. 앱을 새로 배포해도 지워지지 않아 재다운로드가 없다. */
 var BIN = 'image-diet-bin-v1';
 /* 'sam-models-v1'은 index.html이 외부 CDN 모델(RMBG·SlimSAM)을 직접 넣는 캐시다.
    여기서 지우면 새로 배포할 때마다 42MB를 다시 받게 되므로 반드시 보존한다. */
 var KEEP = [CACHE, BIN, 'sam-models-v1'];
-var ASSETS = ['./', './index.html', './manifest.json', './logo.png', './favicon.png', './icon-180.png', './icon-192.png', './icon-512.png'];
+var ASSETS = ['./', './index.html', './manifest.json', './logo.png', './favicon.png', './url-rules.js', './icon-180.png', './icon-192.png', './icon-512.png'];
 
 function isBinary(url) {
   return /\/(models|vendor)\//.test(url.pathname);

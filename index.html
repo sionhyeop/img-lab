@@ -496,6 +496,23 @@ textarea {
   resize: vertical; word-break: break-all;
 }
 .ta-wrap { position: relative; margin-top: 12px; }
+/* 링크 정리 */
+.url-in { font-size: 14px; line-height: 1.5; min-height: 78px; }
+.url-msg { margin: 10px 0 0; font-size: 13px; color: var(--danger); }
+#urlOut { margin-top: 14px; }
+.url-row {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 12px; align-items: center;
+  padding: 14px 0; border-top: 1px solid var(--border);
+}
+.url-row-head { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 8px; font-size: 13px; }
+.url-label { font-weight: 700; }
+.url-sub { color: var(--muted); }
+.url-diff { margin-left: auto; color: var(--muted); font-variant-numeric: tabular-nums; }
+.url-val {
+  min-width: 0; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 13px; line-height: 1.55; overflow-wrap: anywhere; word-break: break-all;
+}
+.url-done { margin: 0; padding-top: 12px; border-top: 1px solid var(--border); font-size: 13px; color: var(--muted); }
 .ta-wrap textarea { margin-top: 0; }
 /* 문자 수 세기 — 박스 오른쪽 아래 모서리 */
 .char-count {
@@ -724,6 +741,10 @@ input.split-name-num:focus { background: rgba(255, 255, 255, .28); outline: 2px 
     <button class="tab" id="tabQr" role="tab" aria-selected="false" aria-controls="panel-qr" type="button">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="6.5" height="6.5" rx="1"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1"/><path d="M13.5 13.5h3v3h-3zM20 13.5v3M16.5 20H20M13.5 20h.01"/></svg>
       QR 생성
+    </button>
+    <button class="tab" id="tabUrl" role="tab" aria-selected="false" aria-controls="panel-url" type="button">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg>
+      링크 정리
     </button>
     <div class="tab-more" id="tabMoreWrap">
     <button class="tab" id="tabMoreBtn" type="button" aria-haspopup="true" aria-expanded="false">
@@ -1665,6 +1686,30 @@ input.split-name-num:focus { background: rgba(255, 255, 255, .28); outline: 2px 
       </div>
     </div>
   </section>
+  <section id="panel-url" role="tabpanel" aria-labelledby="tabUrl" hidden>
+    <div class="card b64-card url-card">
+      <div class="card-head">
+        <h2>링크 정리</h2>
+        <p class="muted">추적용 파라미터를 지우고 한글을 읽기 좋게 풀어, 같은 페이지로 열리는 짧은 주소로 다듬어요 — 단축 코드 발급이 아니라 만료도 없어요</p>
+      </div>
+      <textarea id="urlIn" class="url-in" rows="3" spellcheck="false" autocomplete="off" autocapitalize="off" placeholder="정리할 링크를 붙여넣으세요" aria-label="정리할 링크"></textarea>
+      <p class="url-msg" id="urlMsg" role="alert" hidden></p>
+      <div id="urlOut" hidden>
+        <div class="url-row">
+          <div class="url-row-head"><span class="url-label">읽기 좋은 버전</span><span class="url-sub">메신저 공유용</span><span class="url-diff" id="urlReadableDiff"></span></div>
+          <div class="url-val" id="urlReadable"></div>
+          <button class="btn" id="urlCopyReadable" type="button">복사</button>
+        </div>
+        <div class="url-row">
+          <div class="url-row-head"><span class="url-label">안전한 버전</span><span class="url-sub">지원서·공식 문서·구형 메일용</span><span class="url-diff" id="urlSafeDiff"></span></div>
+          <div class="url-val" id="urlSafe"></div>
+          <button class="btn" id="urlCopySafe" type="button">복사</button>
+        </div>
+        <p class="url-done" id="urlDone"></p>
+      </div>
+    </div>
+  </section>
+
   <section id="panel-base64" role="tabpanel" aria-labelledby="tabBase64" hidden>
     <div class="card b64-card enc-card">
       <div class="card-head">
@@ -1903,6 +1948,7 @@ input.split-name-num:focus { background: rgba(255, 255, 255, .28); outline: 2px 
 
 <div id="toasts" aria-live="polite"></div>
 
+<script src="url-rules.js"></script>
 <script>
 (function () {
   'use strict';
@@ -1946,6 +1992,7 @@ input.split-name-num:focus { background: rgba(255, 255, 255, .28); outline: 2px 
     { btn: $('#tabPdf'), panel: $('#panel-pdf'), key: 'pdf', label: 'PDF', desc: '이미지를 PDF로 묶고, PDF를 이미지로 풀어요' },
     { btn: $('#tabGif'), panel: $('#panel-gif'), key: 'gif', label: 'GIF', desc: '이미지·영상을 움직이는 GIF로 만들어요' },
     { btn: $('#tabQr'), panel: $('#panel-qr'), key: 'qr', label: 'QR 생성', desc: 'URL을 만료 없는 QR 코드로 만들어요' },
+    { btn: $('#tabUrl'), panel: $('#panel-url'), key: 'url', label: '링크 정리', desc: '긴 링크의 추적 파라미터를 지우고 한글을 풀어 짧게 만들어요' },
     { btn: $('#tabBase64'), panel: $('#panel-base64'), key: 'base64', label: 'Base64 도구', desc: '이미지 ↔ Data URI 변환' },
     { btn: $('#tabMeta'), panel: $('#panel-meta'), key: 'meta', label: '메타데이터 보기·편집', desc: '거의 모든 파일의 속성 정보를 보고 고쳐요' }
   ];
@@ -1958,6 +2005,12 @@ input.split-name-num:focus { background: rgba(255, 255, 255, .28); outline: 2px 
       o.panel.hidden = !on;
     });
     syncMoreTab();
+    /* 좁은 화면에서 탭바가 가로로 넘치면 고른 탭(접힌 탭이면 '기타 기능')이 보이게 가운데로 */
+    var bar = t.btn.closest('.tabs'), tb = MORE_KEYS[t.key] ? tabMoreBtn : t.btn;
+    if (bar && bar.scrollWidth > bar.clientWidth) {
+      var br = bar.getBoundingClientRect(), r = tb.getBoundingClientRect();
+      if (r.left < br.left || r.right > br.right) bar.scrollLeft += (r.left - br.left) - (br.width - r.width) / 2;
+    }
     if (push && location.hash !== '#' + t.key) {
       try { history.replaceState(null, '', '#' + t.key); } catch (e) {}
     }
@@ -3337,6 +3390,8 @@ input.split-name-num:focus { background: rgba(255, 255, 255, .28); outline: 2px 
   function routeFiles(files, fromPaste) {
     files = Array.prototype.slice.call(files || []);
     if (!files.length) return;
+    /* 링크 정리 탭은 파일을 받지 않으므로 압축 탭 기준으로 넘긴다 */
+    if (curTab.key === 'url') selectTab(tabByKey('compress'), true);
     /* 메타데이터·Base64 탭은 어떤 파일이든 받으므로 옮기지 않는다 */
     if (curTab.key !== 'meta' && curTab.key !== 'base64') {
       files = redirectFiles(files, curTab.key);
@@ -12955,8 +13010,164 @@ input.split-name-num:focus { background: rgba(255, 255, 255, .28); outline: 2px 
   });
   window.addEventListener('resize', function () { if (!mapInline.hidden) requestMapDraw(); });
 
+  /* ================= 링크 정리 =================
+     추적 파라미터를 지우고 퍼센트 인코딩을 사람이 읽게 풀어, 같은 페이지로 열리는 짧은 주소를 만든다.
+     규칙 데이터는 url-rules.js. 경로는 디코딩만 하고 내용은 건드리지 않으며, https://·www.도 지우지 않는다.
+     쿼리는 URLSearchParams로 다시 직렬화하지 않고 원문 조각을 그대로 이어 붙인다 — 재직렬화하면
+     남긴 파라미터의 인코딩까지 바뀌어 링크가 달라질 수 있다. */
+  function urlNameMatch(pats, name) {
+    var low = name.toLowerCase();
+    for (var i = 0; i < pats.length; i++) {
+      var p = String(pats[i]).toLowerCase();
+      if (p.charAt(p.length - 1) === '*' ? low.indexOf(p.slice(0, -1)) === 0 : low === p) return true;
+    }
+    return false;
+  }
+  function urlHostMatch(host, list) {
+    for (var i = 0; i < list.length; i++) {
+      var d = String(list[i]).toLowerCase();
+      if (host === d || host.slice(-(d.length + 1)) === '.' + d) return true;
+    }
+    return false;
+  }
+  function urlParamName(seg) {
+    var raw = seg.split('=')[0].replace(/\+/g, ' ');
+    try { return decodeURIComponent(raw); } catch (e) { return raw; }
+  }
+  /* 풀어도 되는 문자 — 영문·숫자·- . _ ~ 와 눈에 보이는 비ASCII 문자(한글 등).
+     공백·예약 문자(/ ? & # = % +)·따옴표·괄호류와 보이지 않는 문자(공백류, 폭 없는 문자, 방향 제어)는 인코딩 유지. */
+  function urlDecodable(cp) {
+    if (cp < 0x80) return /[A-Za-z0-9\-._~]/.test(String.fromCharCode(cp));
+    if (cp <= 0xA0 || cp === 0xAD || cp === 0x1680 || cp === 0x180E || cp === 0x3000 || cp === 0xFEFF) return false;
+    if ((cp >= 0x2000 && cp <= 0x200F) || (cp >= 0x2028 && cp <= 0x202F) || (cp >= 0x205F && cp <= 0x206F)) return false;
+    if ((cp >= 0xE000 && cp <= 0xF8FF) || (cp >= 0xFFF0 && cp <= 0xFFFF) || cp >= 0xE0000) return false;
+    return true;
+  }
+  function urlCharOf(cp) {
+    if (cp <= 0xFFFF) return String.fromCharCode(cp);
+    cp -= 0x10000;
+    return String.fromCharCode(0xD800 + (cp >> 10), 0xDC00 + (cp & 0x3FF));
+  }
+  /* %XX 묶음을 UTF-8로 한 글자씩 풀고, 풀면 안 되는 글자·깨진 바이트는 원래 %XX 그대로 둔다.
+     decodeURIComponent로 통째로 풀면 %2F·%26 같은 구조 문자까지 풀려 주소가 바뀐다. */
+  function urlDecodeReadable(str) {
+    return str.replace(/(?:%[0-9A-Fa-f]{2})+/g, function (run) {
+      var hex = run.match(/%[0-9A-Fa-f]{2}/g);
+      var b = hex.map(function (x) { return parseInt(x.slice(1), 16); });
+      var out = '', i = 0;
+      while (i < b.length) {
+        var c = b[i], len = c < 0x80 ? 1 : (c >> 5) === 6 ? 2 : (c >> 4) === 14 ? 3 : (c >> 3) === 30 ? 4 : 0;
+        var cp = -1;
+        if (len && i + len <= b.length) {
+          cp = len === 1 ? c : c & (0xFF >> (len + 1));
+          for (var k = 1; k < len; k++) {
+            if ((b[i + k] & 0xC0) !== 0x80) { cp = -1; break; }
+            cp = (cp << 6) | (b[i + k] & 0x3F);
+          }
+          var min = [0, 0, 0x80, 0x800, 0x10000][len];
+          if (cp < min || cp > 0x10FFFF || (cp >= 0xD800 && cp <= 0xDFFF)) cp = -1;
+        }
+        if (cp < 0) { out += hex[i]; i++; continue; }
+        out += urlDecodable(cp) ? urlCharOf(cp) : hex.slice(i, i + len).join('');
+        i += len;
+      }
+      return out;
+    });
+  }
+  function urlLen(s) { return s.replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]/g, '_').length; }
+
+  /* 정리 결과 {readable, safe, origLen, notes} 또는 {error}. 빈 입력이면 null */
+  function urlClean(input) {
+    var s = String(input || '').trim();
+    if (!s) return null;
+    /* 문장째 붙여넣었으면 그 안의 링크만 */
+    if (/\s/.test(s) && !/^https?:\/\//i.test(s)) {
+      var found = s.match(/https?:\/\/\S+/i);
+      if (found) s = found[0];
+    }
+    var scheme = s.match(/^([a-z][a-z0-9+.-]*):\/\//i);
+    if (scheme && !/^https?$/i.test(scheme[1])) return { error: 'http·https 링크만 정리할 수 있어요.' };
+    var full = scheme ? s : 'https://' + s;
+    var u;
+    try { u = new URL(full); } catch (e) { return { error: '링크 형식이 아니에요 — 주소를 다시 확인해 주세요.' }; }
+    var host = u.hostname.toLowerCase();
+    if (host.indexOf('.') < 0 && host !== 'localhost' && host.charAt(0) !== '[') return { error: '링크 형식이 아니에요 — 주소를 다시 확인해 주세요.' };
+
+    var rules = window.URL_CLEAN_RULES || { global: [], sites: [] };
+    var siteRemove = [], siteKeep = null;
+    (rules.sites || []).forEach(function (r) {
+      if (!urlHostMatch(host, r.hosts || [])) return;
+      if (r.path && !new RegExp(r.path).test(u.pathname)) return;
+      if (r.remove) siteRemove = siteRemove.concat(r.remove);
+      if (r.keep) siteKeep = (siteKeep || []).concat(r.keep);
+    });
+    var removed = [];
+    var segs = u.search ? u.search.slice(1).split('&') : [];
+    var kept = segs.filter(function (seg) {
+      if (seg === '') return false;
+      var name = urlParamName(seg);
+      var drop = urlNameMatch(rules.global || [], name) || urlNameMatch(siteRemove, name) ||
+        (siteKeep !== null && !urlNameMatch(siteKeep, name));
+      if (drop && removed.indexOf(name) < 0) removed.push(name);
+      return !drop;
+    });
+
+    var hrefNoHash = u.href.split('#')[0];
+    var emptyQ = !u.search && hrefNoHash.charAt(hrefNoHash.length - 1) === '?';
+    var emptyHash = !u.hash && u.href.charAt(u.href.length - 1) === '#';
+    /* URL은 'example.com'에 '/'를 붙이지만 원문에 없던 글자를 더하지 않는다 */
+    var path = u.pathname === '/' && !/^[a-z][a-z0-9+.-]*:\/\/[^\/?#]*\//i.test(full) ? '' : u.pathname;
+    var auth = u.username ? u.username + (u.password ? ':' + u.password : '') + '@' : '';
+    /* 한글 도메인은 URL이 퓨니코드(xn--)로 바꾸므로 읽기 좋은 버전엔 원문 표기를 쓴다 */
+    var readHost = u.host;
+    if (/xn--/i.test(u.hostname)) {
+      var rawHost = full.replace(/^[a-z][a-z0-9+.-]*:\/\/(?:[^@\/?#]*@)?/i, '').split(/[\/?#]/)[0];
+      try { if (new URL('https://' + rawHost).host === u.host) readHost = rawHost; } catch (e) {}
+    }
+    var query = kept.length ? '?' + kept.join('&') : '';
+    var base = u.protocol + '//' + auth;
+    var safe = base + u.host + path + query + u.hash;
+    var readable = base + readHost + urlDecodeReadable(path + query + u.hash);
+
+    var notes = [];
+    if (removed.length) notes.push(removed.join(', ') + ' 제거');
+    if (readable !== safe) notes.push(/[^\x00-\x7F]/.test(readable) ? '한글 디코딩' : '인코딩 풀기');
+    if (emptyQ) notes.push('빈 ? 제거');
+    if (emptyHash) notes.push('빈 # 제거');
+    return { readable: readable, safe: safe, origLen: urlLen(s), notes: notes };
+  }
+
+  var urlIn = $('#urlIn');
+  var urlResult = null;
+  function urlDiff(n) {
+    var d = urlResult.origLen - n;
+    return n + '자 · ' + (d > 0 ? d + '자 줄었어요' : d < 0 ? -d + '자 늘었어요' : '원본과 같은 길이');
+  }
+  function urlRender() {
+    var r = urlClean(urlIn.value);
+    var err = !!(r && r.error);
+    $('#urlMsg').hidden = !err;
+    $('#urlMsg').textContent = err ? r.error : '';
+    urlResult = r && !err ? r : null;
+    $('#urlOut').hidden = !urlResult;
+    if (!urlResult) return;
+    $('#urlReadable').textContent = r.readable;
+    $('#urlSafe').textContent = r.safe;
+    $('#urlReadableDiff').textContent = urlDiff(urlLen(r.readable));
+    $('#urlSafeDiff').textContent = urlDiff(urlLen(r.safe));
+    $('#urlDone').textContent = r.notes.length ? r.notes.join(' · ') : '정리할 부분이 없어요 — 이미 깔끔한 링크예요.';
+  }
+  urlIn.addEventListener('input', urlRender);
+  [['#urlCopyReadable', 'readable'], ['#urlCopySafe', 'safe']].forEach(function (pair) {
+    $(pair[0]).addEventListener('click', function () {
+      if (!urlResult) return;
+      copyText(urlResult[pair[1]]).then(function (ok) { toast(ok ? '링크를 복사했어요.' : '복사하지 못했어요.'); });
+    });
+  });
+
   /* 콘솔/테스트용 내부 핸들 */
   window.__imgdiet = {
+    urlClean: urlClean,
     get items() { return items; },
     get settings() { return settings; },
     decodeB64Input: function () { return decodeB64Input(); },
