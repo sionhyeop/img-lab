@@ -512,6 +512,8 @@ textarea {
   min-width: 0; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   font-size: 13px; line-height: 1.55; overflow-wrap: anywhere; word-break: break-all;
 }
+.save-hint { margin: 10px 0 0; font-size: 13px; color: var(--muted); line-height: 1.55; }
+.save-hint b { color: var(--text); }
 .qr-cap-row { display: flex; flex-wrap: wrap; gap: 8px 10px; align-items: center; }
 .qr-cap-row input { flex: 1 1 200px; min-width: 0; }
 .url-done { margin: 0; padding-top: 12px; border-top: 1px solid var(--border); font-size: 13px; color: var(--muted); }
@@ -871,6 +873,7 @@ input.split-name-num:focus { background: rgba(255, 255, 255, .28); outline: 2px 
           <button id="shareCompress" class="btn btn-share" type="button"><span class="sh-ico" aria-hidden="true">🔗</span>공유하기</button>
         </div>
       </div>
+      <p class="save-hint" id="saveHintAndroid" hidden>여러 장을 처음 저장할 때 크롬이 <b>‘여러 파일을 다운로드하려고 합니다’</b>를 물으면 <b>허용</b>을 눌러 주세요 — 한 번만 허용하면 다음부터는 바로 저장돼요. 사진은 <b>다운로드 폴더</b>(갤러리 › Download 앨범)에 저장돼요.</p>
       <div class="summary-divider" aria-hidden="true"></div>
       <div class="field">
         <label class="field-label" for="bulkName">파일 이름 <span class="sub">— 입력하는 즉시 아래 전체가 <b>이름-1, 이름-2…</b>로 바뀌어요 (비우면 원래 이름)</span></label>
@@ -2212,6 +2215,8 @@ input.split-name-num:focus { background: rgba(255, 255, 255, .28); outline: 2px 
      저장/공유 시트를 함께 띄워 확실한 경로를 남긴다. */
   var isMobileUA = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) ||
     (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1);
+  var isAndroidUA = /Android/i.test(navigator.userAgent);
+  var isIOSUA = isMobileUA && !isAndroidUA;
 
   function toFile(blob, name) {
     try { return new File([blob], name, { type: blob.type || 'application/octet-stream' }); }
@@ -3128,12 +3133,25 @@ input.split-name-num:focus { background: rgba(255, 255, 255, .28); outline: 2px 
       })();
     });
   }
+  /* 안드로이드 — 한 번의 탭 안에서 전부 내려받기를 건다. 크롬(설치한 PWA 포함)은 첫 장만 받고
+     '여러 파일 다운로드' 허용을 한 번 묻는데, 허용하면 기다리던 나머지도 이어 받고 다음부터는 묻지 않는다.
+     받은 파일은 '다운로드' 폴더에 저장되고 갤러리의 Download 앨범에 바로 보인다. */
+  function burstDownload(entries) {
+    entries.forEach(function (e) { anchorSave(e.blob, e.name); });
+    return Promise.resolve(entries.length);
+  }
   /* '개별 파일로 모두 저장' — ZIP으로 묶지 않고 파일 하나하나로 저장한다.
-     모바일에서는 공유 시트로 전체를 한 번에 넘겨 사진·파일 앱에 그대로 담고,
-     그 외에는 순차 다운로드한다. */
+     · 안드로이드: 바로 다운로드 → 다운로드 폴더·갤러리 (공유 시트는 저장 대신 다른 앱으로 보내는 거라 쓰지 않는다)
+     · iPhone·iPad: 공유 시트의 '이미지 N개 저장'이 사진 앱에 넣는 유일한 길이라 공유 시트를 쓴다
+     · 그 밖(데스크톱): 간격을 두고 순차 다운로드 */
   function saveAllIndividually(entries, what) {
     if (!entries.length) return Promise.resolve();
-    var files = isMobileUA ? entries.map(function (e) { return toFile(e.blob, e.name); }).filter(Boolean) : [];
+    if (isAndroidUA) {
+      return burstDownload(entries).then(function (n) {
+        toast(n + '개를 다운로드 폴더에 저장했어요 — 갤러리 › Download 앨범에서 볼 수 있어요.');
+      });
+    }
+    var files = isIOSUA ? entries.map(function (e) { return toFile(e.blob, e.name); }).filter(Boolean) : [];
     if (files.length && canShareFiles(files)) {
       return shareFiles(files, entries.length + '개 ' + (what || '파일')).then(function (r) {
         if (r === 'shared') { toast(entries.length + '개를 공유 시트로 넘겼어요.'); return; }
@@ -3162,10 +3180,13 @@ input.split-name-num:focus { background: rgba(255, 255, 255, .28); outline: 2px 
   /* 저장 방식은 ZIP / 개별 파일 두 가지 — 슬라이딩 토글로 고르고 '모두 저장'이 실행한다.
      기본은 개별 파일 저장. */
   var saveMode = 'each';
+  function syncSaveHint() { $('#saveHintAndroid').hidden = !(isAndroidUA && saveMode === 'each'); }
+  syncSaveHint();
   el.saveModeSeg.addEventListener('click', function (e) {
     var b = e.target.closest('.seg-opt');
     if (!b || b.dataset.savemode === saveMode) return;
     saveMode = b.dataset.savemode;
+    syncSaveHint();
     el.saveModeSeg.classList.toggle('right', saveMode === 'each');
     el.saveModeSeg.querySelectorAll('.seg-opt').forEach(function (o) {
       var on = o.dataset.savemode === saveMode;
