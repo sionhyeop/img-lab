@@ -512,7 +512,7 @@ textarea {
   min-width: 0; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   font-size: 13px; line-height: 1.55; overflow-wrap: anywhere; word-break: break-all;
 }
-.save-hint { margin: 10px 0 0; font-size: 13px; color: var(--muted); line-height: 1.55; }
+.save-hint { margin: 10px 0 0; font-size: 13px; color: var(--muted); line-height: 1.55; word-break: keep-all; }
 .save-hint b { color: var(--text); }
 .qr-cap-row { display: flex; flex-wrap: wrap; gap: 8px 10px; align-items: center; }
 .qr-cap-row input { flex: 1 1 200px; min-width: 0; }
@@ -873,7 +873,7 @@ input.split-name-num:focus { background: rgba(255, 255, 255, .28); outline: 2px 
           <button id="shareCompress" class="btn btn-share" type="button"><span class="sh-ico" aria-hidden="true">🔗</span>공유하기</button>
         </div>
       </div>
-      <p class="save-hint" id="saveHintAndroid" hidden>여러 장을 처음 저장할 때 크롬이 <b>‘여러 파일을 다운로드하려고 합니다’</b>를 물으면 <b>허용</b>을 눌러 주세요 — 한 번만 허용하면 다음부터는 바로 저장돼요. 사진은 <b>다운로드 폴더</b>(갤러리 › Download 앨범)에 저장돼요.</p>
+      <p class="save-hint" id="saveHintAndroid" hidden>처음 한 번 ‘여러 파일 다운로드’를 물으면 <b>허용</b>을 눌러 주세요. 사진은 <b>다운로드</b> 폴더에 저장돼요.</p>
       <div class="summary-divider" aria-hidden="true"></div>
       <div class="field">
         <label class="field-label" for="bulkName">파일 이름 <span class="sub">— 입력하는 즉시 아래 전체가 <b>이름-1, 이름-2…</b>로 바뀌어요 (비우면 원래 이름)</span></label>
